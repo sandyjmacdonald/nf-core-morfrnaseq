@@ -81,6 +81,43 @@
             },
             "required": ["fasta", "gtf"]
         },
+        "ht_seq_parameters": {
+            "title": "HTSeq parameters",
+            "description": "Additional configuation for HTSeq.",
+            "type": "object",
+            "default": "",
+            "properties": {
+                "htseq_mode": {
+                    "type": "string",
+                    "description": "Mode to handle reads overlapping more than one feature.",
+                    "enum": ["union", "intersection-strict", "intersection-nonempty"],
+                    "default": "union"
+                },
+                "htseq_stranded": {
+                    "type": "string",
+                    "description": "Whether the data is from a strand-specific assay (yes, no.)",
+                    "enum": ["yes", "no"],
+                    "default": "yes"
+                },
+                "htseq_type": {
+                    "type": "string",
+                    "description": "Feature type (3rd column in GFF file) to be used, all features of other type are ignored (e.g. gene).",
+                    "default": "gene"
+                },
+                "htseq_idattr": {
+                    "type": "string",
+                    "description": "GFF attribute to be used as feature ID.",
+                    "default": "locus_tag"
+                },
+                "htseq_order": {
+                    "type": "string",
+                    "description": "For paired-end data, the method to sort the aligned reads if not sorted.",
+                    "enum": ["name", "pos"],
+                    "default": "name"
+                }
+            },
+            "fa_icon": "fas fa-calculator"
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -281,43 +318,6 @@
                     "hidden": true
                 }
             }
-        },
-        "ht_seq_parameters": {
-            "title": "HTSeq parameters",
-            "description": "Additional configuation for HTSeq.",
-            "type": "object",
-            "default": "",
-            "properties": {
-                "htseq_mode": {
-                    "type": "string",
-                    "description": "Mode to handle reads overlapping more than one feature.",
-                    "enum": ["union", "intersection-strict", "intersection-nonempty"],
-                    "default": "union"
-                },
-                "htseq_stranded": {
-                    "type": "string",
-                    "description": "Whether the data is from a strand-specific assay (yes, no.)",
-                    "enum": ["yes", "no"],
-                    "default": "yes"
-                },
-                "htseq_type": {
-                    "type": "string",
-                    "description": "Feature type (3rd column in GFF file) to be used, all features of other type are ignored (e.g. gene).",
-                    "default": "gene"
-                },
-                "htseq_idattr": {
-                    "type": "string",
-                    "description": "GFF attribute to be used as feature ID.",
-                    "default": "locus_tag"
-                },
-                "htseq_order": {
-                    "type": "string",
-                    "description": "For paired-end data, the method to sort the aligned reads if not sorted.",
-                    "enum": ["name", "pos"],
-                    "default": "name"
-                }
-            },
-            "fa_icon": "fas fa-calculator"
         }
     },
     "allOf": [
