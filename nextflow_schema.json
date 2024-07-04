@@ -283,8 +283,8 @@
             }
         },
         "ht_seq_parameters": {
-            "title": "HT-seq parameters",
-            "description": "Additional configuation for HT-seq."
+            "title": "HTSeq parameters",
+            "description": "Additional configuation for HTSeq."
             "type": "object",
             "default": "",
             "properties": {
