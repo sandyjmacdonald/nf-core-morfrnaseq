@@ -4,7 +4,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
+include { FASTQC as FASTQC_RAW } from '../modules/nf-core/fastqc/main'
+include { FASTQC as FASTQC_TRIMMED } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { CUTADAPT } from '../modules/nf-core/cutadapt/main'
 include { BOWTIE2_BUILD } from '../modules/nf-core/bowtie2/build/main' 
@@ -33,28 +34,17 @@ workflow MORFRNASEQ {
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
-
-    // ch_samplesheet.view { it : it[0]["id"] }
+    ch_fastqc_raw_multiqc  = Channel.empty()
+    // ch_fastqc_trim_multiqc = Channel.empty()
 
     //
-    // MODULE: Run FastQC
+    // MODULE: Run FastQC on raw data
     //
-    FASTQC (
+    FASTQC_RAW (
         ch_samplesheet
     )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
-
-    //
-    // Collate and save software versions
-    //
-    softwareVersionsToYAML(ch_versions)
-        .collectFile(
-            storeDir: "${params.outdir}/pipeline_info",
-            name: 'nf_core_pipeline_software_mqc_versions.yml',
-            sort: true,
-            newLine: true
-        ).set { ch_collated_versions }
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_RAW.out.zip.collect{it[1]})
+    ch_versions = ch_versions.mix(FASTQC_RAW.out.versions.first())
 
     //
     // MODULE: Run Trimmomatic
@@ -63,6 +53,17 @@ workflow MORFRNASEQ {
         ch_samplesheet
     )
     ch_trimmed_reads = CUTADAPT.out.reads
+    ch_multiqc_files = ch_multiqc_files.mix(CUTADAPT.out.log.collect{it[1]})
+    ch_versions = ch_versions.mix(CUTADAPT.out.versions.first())
+
+    //
+    // MODULE: Run FastQC on trimmed data
+    //
+    FASTQC_TRIMMED (
+        ch_trimmed_reads
+    )
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC_TRIMMED.out.zip.collect{it[1]})
+    ch_versions = ch_versions.mix(FASTQC_TRIMMED.out.versions.first())
 
     //
     // MODULE: Run Bowtie2 build
@@ -72,6 +73,7 @@ workflow MORFRNASEQ {
        ch_fasta
     )
     ch_bowtie2_index = BOWTIE2_BUILD.out.index
+    ch_versions = ch_versions.mix(BOWTIE2_BUILD.out.versions.first())
 
     //
     // MODULE: Run Bowtie2 align
@@ -84,6 +86,8 @@ workflow MORFRNASEQ {
         true
     )
     ch_sorted_bam = BOWTIE2_ALIGN.out.bam
+    ch_multiqc_files = ch_multiqc_files.mix(BOWTIE2_ALIGN.out.log.collect{it[1]})
+    ch_versions = ch_versions.mix(BOWTIE2_ALIGN.out.versions.first())
 
     //
     // MODULE: Run Samtools index
@@ -92,6 +96,7 @@ workflow MORFRNASEQ {
         ch_sorted_bam
     )
     ch_bam_index = SAMTOOLS_INDEX.out.bai
+    ch_versions = ch_versions.mix(SAMTOOLS_INDEX.out.versions.first())
 
     //
     // MODULE: Run HT-seq count
@@ -103,6 +108,19 @@ workflow MORFRNASEQ {
         ch_gtf
     )
     ch_counts = HTSEQ_COUNT.out
+    ch_multiqc_files = ch_multiqc_files.mix(HTSEQ_COUNT.out.txt.collect{it[1]})
+    ch_versions = ch_versions.mix(HTSEQ_COUNT.out.versions.first())
+
+    //
+    // Collate and save software versions
+    //
+    softwareVersionsToYAML(ch_versions)
+        .collectFile(
+            storeDir: "${params.outdir}/pipeline_info",
+            name: 'nf_core_pipeline_software_mqc_versions.yml',
+            sort: true,
+            newLine: true
+        ).set { ch_collated_versions }
 
     //
     // MODULE: MultiQC
